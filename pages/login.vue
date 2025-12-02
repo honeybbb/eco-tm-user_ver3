@@ -33,13 +33,13 @@ const handleLogin = async () => {
 
   try {
     // 실제 백엔드 API 호출
-    const response = await axios.post('/api/login', {
+    const response = await axios.post('http://localhost:3001/v1/member/auth', {
       id: form.value.username,
       password: form.value.password
     });
 
     // 성공 시 토큰을 저장하고 메인으로 이동
-    login(response.data.token);
+    login(response.data.data);
 
   } catch (err) {
     console.error('Login Failed:', err);

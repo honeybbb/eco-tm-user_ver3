@@ -17,9 +17,11 @@ export const useAuth = () => {
     };
     checkAuth();
 
-    const login = (token) => {
+    const login = (user) => {
         if (process.client) {
-            localStorage.setItem('user_token', token);
+            delete user.password;
+            localStorage.setItem('user_data', JSON.stringify(user));
+            localStorage.setItem('user_token', user.token);
             isLoggedIn.value = true;
         }
         router.push('/');

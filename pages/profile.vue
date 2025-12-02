@@ -232,9 +232,22 @@ const isSaving = ref(false);
 let originalEmployeeData = {};
 
 const employee = ref({
-  name: '', id: '', phone: '', email: '', birthDate: '', address: '',
-  site: '', position: '', joinDate: '', status: '재직', gender: '',
-  bankName: '', accountNumber: '', notes: '', departureDate: '', departureReason: '',
+  name: '김철수',
+  id: 'EMP001',
+  phone: '010-1234-5678',
+  email: 'chulsoo@example.com',
+  birthDate: '1990-03-15',
+  address: '서울시 강남구',
+  site: 'LH 위례 6단지',
+  position: '관리자',
+  joinDate: '2018-09-01',
+  status: '재직',
+  gender: '남',
+  bankName: '국민은행',
+  accountNumber: '123-45-67890-123',
+  bigo: '주간 근무만 가능함.',
+  departureDate: '',
+  departureReason: '',
 });
 
 const showStatusMessage = (message, type = 'info') => {
@@ -297,20 +310,20 @@ const getMembers = async () => {
     const data = response.data.data[0];
 
     employee.value = {
-      name: data.name || '김철수',
-      id: data.id || 'EMP001',
-      phone: data.phone || '010-1234-5678',
-      email: data.email || 'chulsoo@example.com',
+      name: data.name || '',
+      id: data.id || '',
+      phone: data.phone || '',
+      email: data.email || '',
       birthDate: data.birthDate ? data.birthDate.split('T')[0] : '1990-03-15',
-      address: data.addr || '서울시 강남구',
-      site: data.siteName || 'LH 위례 6단지',
-      position: data.positionName || '관리자',
+      address: data.addr || '',
+      site: data.siteName || '',
+      position: data.positionName || '',
       joinDate: data.joinDate ? data.joinDate.split('T')[0] : '2018-09-01',
-      status: data.status || '재직',
-      gender: data.gender || '남',
-      bankName: data.bank || '국민은행',
-      accountNumber: data.accountNo || '123-45-67890-123',
-      notes: data.notes || '주간 근무만 가능함.',
+      status: data.status || '',
+      gender: data.gender || '',
+      bankName: data.bank || '',
+      accountNumber: data.accountNo || '',
+      bigo: data.bigo || '',
       departureDate: data.departureDate ? data.departureDate.split('T')[0] : '',
       departureReason: data.departureReason || '',
     };
