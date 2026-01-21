@@ -306,7 +306,7 @@ const getMembers = async () => {
   try {
     // 더미 데이터 로드 (실제 API로 대체)
     const mIdx = 1;
-    const response = await axios.get(`http://localhost:3001/v1/member/data/${mIdx}`);
+    const response = await axios.get(`/api/v1/member/data/${mIdx}`);
     const data = response.data.data[0];
 
     employee.value = {

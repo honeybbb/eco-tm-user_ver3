@@ -64,7 +64,7 @@ const handleTimeRecord = async () => {
   statusMessage.value = `${type === 'checkin' ? '출근' : '퇴근'} 기록 중...`;
 
   try {
-    const url = type == 'checkout' ? 'http://localhost:3001/v1/work/end' : 'http://localhost:3001/v1/work/start'
+    const url = type == 'checkout' ? '/api/v1/work/end' : '/api/v1/work/start'
     const token = localStorage.getItem('user_token');
     await axios.post(url, {
       // type: type,

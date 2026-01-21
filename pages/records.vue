@@ -110,7 +110,7 @@ const fetchRecords = async () => {
     // 실제 API 호출 (예: GET /api/records?month=YYYY-MM)
     // const token = localStorage.getItem('user_token');
     const mIdx = 1;
-    const response = await axios.get(`http://localhost:3001/v1/work/sheet/${mIdx}?startDt=${selectedMonth.value}&endDt=${selectedMonth.value}`, {
+    const response = await axios.get(`/api/v1/work/sheet/${mIdx}?startDt=${selectedMonth.value}&endDt=${selectedMonth.value}`, {
       // headers: { Authorization: `Bearer ${token}` }
     });
     records.value = response.data.data;
@@ -131,7 +131,7 @@ const fetchRecords = async () => {
 const getWorkFl = async () => {
   const mIdx = 1;
   const sIdx = 1;
-  const response = await axios.get(`http://localhost:3001/v1/work/${mIdx}?sIdx=${sIdx}`)
+  const response = await axios.get(`/api/v1/work/${mIdx}?sIdx=${sIdx}`)
   console.log(response.data.data);
 }
 
