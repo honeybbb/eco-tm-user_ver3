@@ -138,32 +138,32 @@ const handleAttendance = async (type, name = null) => {
     return;
   }
 
-  const result = confirm(`${name} 직원을 대신해서 근무하시나요?`)
-  if(result) {
-    try {
-      const payload = {
-        mIdx: mIdx,
-        sIdx: sIdx,
-        workStartTime: currentTime.value,
-        workType: type,
-        bigo: name ? `${name} 대근` : ''
-      };
+  const proceed = name ? confirm(`${name} 직원을 대신해서 근무하시나요?`) : true;
+  if (!proceed) return;
 
-      // 퇴근일 경우의 API 주소는 다를 수 있으므로 체크 필요 (예시로 start 유지)
-      const url = type === 'leave' ? `/api/v1/work/end` : `/api/v1/work/start`;
-      await axios.post(url, payload);
+  try {
+    const payload = {
+      mIdx: mIdx,
+      sIdx: sIdx,
+      workStartTime: currentTime.value,
+      workType: type,
+      bigo: name ? `${name} 대근` : ''
+    };
 
-      if (type === 'leave') {
-        isWorkStarted.value = false; // 퇴근 시 버튼 다시 활성화
-        alert("퇴근 처리가 완료되었습니다.");
-      } else {
-        isWorkStarted.value = true; // ★ 출근 시 버튼 비활성화 상태로 변경
-        alert("출근 처리가 완료되었습니다.");
-      }
-      closeModal();
-    } catch (error) {
-      alert("처리에 실패했습니다. 다시 시도해주세요.");
+    // 퇴근일 경우의 API 주소는 다를 수 있으므로 체크 필요 (예시로 start 유지)
+    const url = type === 'leave' ? `/api/v1/work/end` : `/api/v1/work/start`;
+    await axios.post(url, payload);
+
+    if (type === 'leave') {
+      isWorkStarted.value = false; // 퇴근 시 버튼 다시 활성화
+      alert("퇴근 처리가 완료되었습니다.");
+    } else {
+      isWorkStarted.value = true; // ★ 출근 시 버튼 비활성화 상태로 변경
+      alert("출근 처리가 완료되었습니다.");
     }
+    closeModal();
+  } catch (error) {
+    alert("처리에 실패했습니다. 다시 시도해주세요.");
   }
 };
 

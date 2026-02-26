@@ -41,11 +41,11 @@ const route = useRoute();
 // 현재 경로에 따라 헤더 타이틀 동적 변경
 const currentPageTitle = computed(() => {
   const path = route.path;
-  if (path === '/') return '메인 대시보드';
+  if (path === '/') return '대시보드';
   if (path.includes('attendance')) return '근무 기록';
   if (path.includes('request')) return '신청';
   if (path.includes('profile')) return '마이페이지';
-  if (path.includes('notices')) return '공지사항';
+  if (path.includes('notice')) return '공지사항';
   return 'ERP 시스템';
 });
 </script>
