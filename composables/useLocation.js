@@ -51,6 +51,8 @@ export const useLocation = () => {
                     OFFICE_LAT, OFFICE_LNG
                 );
 
+                console.log(distance, ALLOWED_DISTANCE_M);
+
                 if (distance <= ALLOWED_DISTANCE_M) {
                     statusMessage.value = `✅ 근무지 근처입니다. (거리: ${Math.round(distance)}m)`;
                 } else {
