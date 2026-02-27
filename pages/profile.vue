@@ -162,6 +162,11 @@ const getMemberData = async () => {
     const res = await axios.get(`/api/v1/member/data/${userId}`);
     if (res.data.data.length > 0) {
       const d = res.data.data[0];
+
+      authStore.updateUserInfo({
+        positionCd: d.positionCd
+      });
+
       employee.value = {
         ...employee.value,
         site: d.siteName || '',

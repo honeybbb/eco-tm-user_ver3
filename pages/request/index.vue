@@ -27,7 +27,9 @@
       </NuxtLink>
 
       <!-- 피복 신청 -->
-      <NuxtLink to="/request/uniform"
+      <NuxtLink
+          v-if="positionCd == '01002001' || positionCd == '01002003'"
+          to="/request/uniform"
                 class="flex items-center justify-between bg-white px-6 py-7 rounded-3xl border-2 border-slate-100 shadow-md active:bg-slate-50 active:scale-95 transition-all"
       >
         <div class="flex items-center gap-5">
@@ -51,5 +53,6 @@ import axios from 'axios';
 import { useAuthStore } from '~/stores/auth';
 
 const authStore = useAuthStore();
+const positionCd = computed(() => authStore.user?.[0]?.positionCd);
 
 </script>

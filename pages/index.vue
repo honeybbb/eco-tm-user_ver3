@@ -40,10 +40,10 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-2 gap-4">
-      <NuxtLink to="/request/off" class="menu-item">🏝️ 연차 신청</NuxtLink>
-      <NuxtLink to="/request/uniform" class="menu-item">👕 피복 신청</NuxtLink>
-    </div>
+    <!--div class="grid grid-cols-2 gap-4">
+      <NuxtLink v-if="positionCd == '01002001' || positionCd == '01002003'" to="/request/off" class="menu-item">연차 신청</NuxtLink>
+      <NuxtLink to="/request/uniform" class="menu-item">피복 신청</NuxtLink>
+    </div-->
 
     <div v-if="showSelector" class="fixed inset-0 bg-black/70 flex items-end z-50">
       <div class="bg-white w-full rounded-t-[3rem] p-8 pb-12 space-y-6 animate-slide-up shadow-2xl">
@@ -82,8 +82,9 @@ import axios from 'axios';
 import { useAuthStore } from '~/stores/auth'; // 스토어 임포트
 
 const authStore = useAuthStore(); // 스토어 사용
-const mIdx = authStore.user?.[0].idx;
-const sIdx = authStore.user?.[0].sIdx;
+const mIdx = computed(() => authStore.user?.[0]?.idx);
+const sIdx = computed(() => authStore.user?.[0]?.sIdx);
+const positionCd = computed(() => authStore.user?.[0]?.positionCd);
 
 const today = new Date().toLocaleDateString('ko-KR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 const currentTime = ref('');

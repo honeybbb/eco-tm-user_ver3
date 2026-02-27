@@ -14,10 +14,20 @@ export const useAuthStore = defineStore('auth', () => {
         user.value = authData.user;
     };
 
+    const updateUserInfo = (newData) => {
+        if (user.value && user.value.length > 0) {
+            // 기존 user[0] 데이터에 새로운 데이터를 병합합니다.
+            user.value[0] = {
+                ...user.value[0],
+                ...newData
+            };
+        }
+    };
+
     const clearAuth = () => {
         token.value = null;
         user.value = null;
     };
 
-    return { token, user, isLoggedIn, setAuth, clearAuth };
+    return { token, user, isLoggedIn, setAuth, updateUserInfo, clearAuth };
 });

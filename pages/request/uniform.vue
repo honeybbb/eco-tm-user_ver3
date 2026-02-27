@@ -85,15 +85,20 @@ const order = (item) => {
   delete selectedSizes[item.id];
 };
 
-const getItemCode = () => {
-  axios.get(`http://localhost:3001/v1/code/item/${cIdx}`)
+const getCode = () => {
+  axios.get(`/api/v1/code/${cIdx}`)
       .then(res => {
         console.log(res.data.data);
         // 필요 시 items.value = res.data.data 로 교체
+
       });
 };
 
+const transformList = async (list) => {
+  console.log(list, 'll')
+}
+
 onMounted(() => {
-  getItemCode();
+  getCode();
 });
 </script>
