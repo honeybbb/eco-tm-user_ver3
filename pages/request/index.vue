@@ -44,12 +44,28 @@
         <span class="text-3xl text-slate-300 font-black">›</span>
       </NuxtLink>
 
+      <!-- 청소 용품 신청 -->
+      <NuxtLink
+          v-if="positionCd == '01002001' || positionCd == '01002003'"
+          to="/request/item"
+                class="flex items-center justify-between bg-white px-6 py-7 rounded-3xl border-2 border-slate-100 shadow-md active:bg-slate-50 active:scale-95 transition-all"
+      >
+        <div class="flex items-center gap-5">
+          <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-4xl shrink-0">
+            🧹
+          </div>
+          <div>
+            <p class="text-2xl font-extrabold text-slate-800">청소용품 신청</p>
+            <p class="text-lg text-slate-400 font-bold mt-1">각 현장에 필요한 청소용품 신청</p>
+          </div>
+        </div>
+        <span class="text-3xl text-slate-300 font-black">›</span>
+      </NuxtLink>
+
     </div>
   </div>
 </template>
 <script setup>
-import { ref, onMounted } from 'vue';
-import axios from 'axios';
 import { useAuthStore } from '~/stores/auth';
 
 const authStore = useAuthStore();

@@ -151,6 +151,7 @@
 <script setup>
 import { ref, computed } from "vue";
 import axios from "axios";
+const authStore = useAuthStore();
 
 const leaveTypes = [
   { value: 'annual', label: '🌿 연차' },
@@ -162,7 +163,7 @@ const selectedType = ref('annual');
 const startDt = ref('');
 const endDt = ref('');
 const reason = ref('');
-const mIdx = 1;
+const mIdx = authStore.user?.[0].idx;
 
 // ── 날짜 포맷 ──────────────────────────────
 const formatDisplay = (dateStr) => {
@@ -261,7 +262,7 @@ const handleSubmit = () => {
 
   const params = {
     mIdx,
-    sIdx: 3,
+    sIdx: authStore.user?.[0].sIdx,
     workType: selectedType.value,
     startDt: startDt.value,
     endDt: endDt.value,

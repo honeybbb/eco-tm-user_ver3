@@ -19,7 +19,7 @@
 
       <!-- 재직 뱃지 -->
       <div class="mt-4 bg-white/20 rounded-2xl px-6 py-2">
-        <span class="text-white text-xl font-extrabold">{{ employee.position || '직위 미지정' }}</span>
+        <span class="text-white text-xl font-extrabold">{{ employee.positionName || '직위 미지정' }}</span>
       </div>
     </div>
 
@@ -44,7 +44,7 @@
         </div>
         <div class="flex justify-between items-center px-6 py-5">
           <span class="text-xl font-bold text-slate-500 shrink-0 w-28">생년월일</span>
-          <span class="text-xl font-extrabold text-slate-800">{{ formatDate(employee.birthDate) }}</span>
+          <span class="text-xl font-extrabold text-slate-800">{{ formatDate(employee.birthDt) }}</span>
         </div>
         <div class="flex flex-col gap-2 px-6 py-5">
           <span class="text-xl font-bold text-slate-500">주소</span>
@@ -70,7 +70,7 @@
         </div>
         <div class="flex justify-between items-center px-6 py-5">
           <span class="text-xl font-bold text-slate-500 shrink-0 w-28">직위</span>
-          <span class="text-xl font-extrabold text-blue-800">{{ employee.position || '-' }}</span>
+          <span class="text-xl font-extrabold text-blue-800">{{ employee.positionName || '-' }}</span>
         </div>
       </div>
     </div>
@@ -121,8 +121,8 @@ const isFetching = ref(true);
 
 const employee = ref({
   name: '', id: '', phone: '', email: '',
-  birthDate: '', address: '', site: '', siteName: '',
-  position: '', joinDate: '', status: '', gender: '',
+  birthDt: '', address: '', site: '', siteName: '',
+  positionName: '', joinDate: '', status: '', gender: '',
   bankName: '', accountNumber: '', bigo: '',
   departureDate: '', departureReason: '',
 });
@@ -146,16 +146,16 @@ const getMemberData = async () => {
     id: data.id || '',
     phone: data.phone || '',
     email: data.email || '',
-    birthDate: data.birthDt ? data.birthDt.split('T')[0] : '',
-    address: data.addr || '',
+    birthDt: data.birthDt ? data.birthDt.split('T')[0] : '',
+    address: data.address || '',
     joinDate: data.inDate ? data.inDate.split('T')[0] : '',
     status: data.status || '',
     gender: data.gender || '',
     bankName: data.bank || '',
-    accountNumber: data.accountNo || '',
+    accountNumber: data.accountNumber || '',
     bigo: data.bigo || '',
-    departureDate: data.departureDate ? data.departureDate.split('T')[0] : '',
-    departureReason: data.departureReason || '',
+    departureDate: data.outDate ? data.outDate.split('T')[0] : '',
+    departureReason: data.outReason || '',
   };
 
   try {
@@ -171,7 +171,7 @@ const getMemberData = async () => {
         ...employee.value,
         site: d.siteName || '',
         siteName: JSON.parse(d.sites)[0]?.name || '',
-        position: d.position || employee.value.position || '',
+        positionName: d.positionName || '',
       };
     }
   } catch (error) {
