@@ -225,60 +225,139 @@ const getDistance = (lat1, lon1, lat2, lon2) => {
 }
 
 // ── 현재 위치 디버그 alert ──
-const debugLocation = ref('')  // 화면에 텍스트로 표시
+const debugLocation  = ref('')
 const isDebugVisible = ref(false)
+const myLat          = ref(null)   // watchPosition에서 실시간 저장
+const myLng          = ref(null)
 
 const alertCurrentLocation = () => {
   isDebugVisible.value = true
-  debugLocation.value  = '🔄 위치 조회 중...'
 
-  // geolocation 지원 여부
-  if (!navigator.geolocation) {
-    debugLocation.value = '❌ 이 기기는 GPS를 지원하지 않습니다.'
+  // 1. 기본 환경 정보 먼저 표시
+  const hasGeo     = 'geolocation' in navigator
+  const hasPerms   = 'permissions' in navigator
+  const ua         = navigator.userAgent
+  const isIOS      = /iPhone|iPad|iPod/.test(ua)
+  const isSafari   = /Safari/.test(ua) && !/Chrome/.test(ua)
+
+  debugLocation.value =
+      `🔍 환경 정보
+` +
+      `geolocation 지원: ${hasGeo}
+` +
+      `permissions API: ${hasPerms}
+` +
+      `iOS: ${isIOS} / Safari: ${isSafari}
+` +
+      `gpsStatus: ${gpsStatus.value}
+` +
+      `gpsAccuracy: ${gpsAccuracy.value ?? '없음'}
+` +
+      `siteCoords: ${JSON.stringify(siteCoords.value)}
+
+` +
+      `🔄 위치 직접 조회 중...`
+
+  if (!hasGeo) {
+    debugLocation.value += '\n❌ geolocation 미지원'
     return
   }
 
-  // watchPosition에서 이미 받은 값이 있으면 즉시 표시
-  if (gpsAccuracy.value !== null) {
-    buildDebugMsg()
-    return
-  }
-
-  // 없으면 직접 조회
+  // 2. getCurrentPosition 직접 시도
   navigator.geolocation.getCurrentPosition(
       (pos) => {
-        gpsAccuracy.value = Math.round(pos.coords.accuracy)
-        buildDebugMsg(pos.coords.latitude, pos.coords.longitude)
+        const lat = pos.coords.latitude
+        const lng = pos.coords.longitude
+        const acc = Math.round(pos.coords.accuracy)
+        gpsAccuracy.value = acc
+
+        let distLine = ''
+        if (siteCoords.value) {
+          const d = Math.round(getDistance(lat, lng, siteCoords.value.lat, siteCoords.value.lng))
+          distLine = `
+📏 현장까지 거리: ${d}m
+허용 범위: ${ALLOWED_RADIUS + Math.min(acc * 0.3, 100)}m`
+        }
+
+        debugLocation.value =
+            `✅ 위치 조회 성공
+
+` +
+            `📍 내 위치
+위도: ${lat}
+경도: ${lng}
+GPS 오차: ±${acc}m
+
+` +
+            `📌 현장
+위도: ${siteCoords.value?.lat ?? '미로드'}
+경도: ${siteCoords.value?.lng ?? '미로드'}` +
+            distLine
       },
       (err) => {
         const msgs = {
-          1: '위치 권한이 거부되었습니다',
-          2: 'GPS 신호를 찾을 수 없습니다',
-          3: 'GPS 응답 시간 초과',
+          1: '권한 거부 (PERMISSION_DENIED)',
+          2: 'GPS 신호 없음 (POSITION_UNAVAILABLE)',
+          3: '시간 초과 (TIMEOUT)',
         }
-        debugLocation.value = `❌ 실패: ${msgs[err.code] || err.message}`
+        debugLocation.value =
+            `❌ 위치 조회 실패
+
+` +
+            `에러 코드: ${err.code}
+` +
+            `에러 내용: ${msgs[err.code] || err.message}
+
+` +
+            `gpsStatus 현재값: ${gpsStatus.value}
+
+` +
+            (err.code === 1
+                ? `👉 해결 방법:
+` +
+                `iOS: 설정 → Safari → 위치 → 허용
+` +
+                `또는 설정 → 개인정보보호 → 위치서비스 → Safari → 앱 사용중
+
+` +
+                `변경 후 반드시 페이지 새로고침 필요`
+                : '')
       },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 30000 }
+      // enableHighAccuracy: false 로 낮춰서 WiFi 위치도 허용
   )
 }
 
 const buildDebugMsg = (lat = null, lng = null) => {
-  const siteLat  = siteCoords.value?.lat ?? '미로드'
-  const siteLng  = siteCoords.value?.lng ?? '미로드'
-  const acc      = gpsAccuracy.value ?? '?'
+  // 파라미터 없으면 watchPosition에서 저장한 값 사용
+  const useLat  = lat ?? myLat.value
+  const useLng  = lng ?? myLng.value
+  const siteLat = siteCoords.value?.lat ?? '미로드'
+  const siteLng = siteCoords.value?.lng ?? '미로드'
+  const acc     = gpsAccuracy.value ?? '?'
 
   let distLine = ''
-  if (lat && lng && siteCoords.value) {
-    const d = Math.round(getDistance(lat, lng, siteCoords.value.lat, siteCoords.value.lng))
-    distLine = `\n📏 현장까지 거리: ${d}m`
+  if (useLat && useLng && siteCoords.value) {
+    const d = Math.round(getDistance(useLat, useLng, siteCoords.value.lat, siteCoords.value.lng))
+    const buffer = Math.min((gpsAccuracy.value ?? 0) * 0.3, 100)
+    distLine = `\n📏 현장까지 거리: ${d}m (허용: ${ALLOWED_RADIUS + buffer}m)`
   }
 
+  const pcWarning = acc > 1000
+      ? `\n\n⚠️ PC/WiFi 환경 감지\n실제 운영은 스마트폰으로 테스트하세요`
+      : ''
+
   debugLocation.value =
-      `📍 내 위치: ${lat ?? '?'}, ${lng ?? '?'}` +
+      `📍 내 위치: ${useLat ?? '조회중'}, ${useLng ?? '조회중'}` +
       `\nGPS 오차: ±${acc}m` +
       `\n📌 현장: ${siteLat}, ${siteLng}` +
-      distLine
+      distLine +
+      pcWarning
 }
+
+// ── HTTP / PC 환경 감지 ──
+const isHttpEnv   = window.location.protocol === 'http:'
+const isMobile    = navigator.maxTouchPoints > 0
 
 // ── 위치 감시 ──
 const startLocationWatch = () => {
@@ -295,7 +374,9 @@ const startLocationWatch = () => {
         const acc = Math.round(pos.coords.accuracy)
         gpsAccuracy.value = acc
 
-        // 디버그용 현재 좌표 저장
+        // 좌표 항상 저장 (디버그용)
+        myLat.value = pos.coords.latitude
+        myLng.value = pos.coords.longitude
         if (isDebugVisible.value) {
           buildDebugMsg(pos.coords.latitude, pos.coords.longitude)
         }
@@ -350,6 +431,15 @@ const startLocationWatch = () => {
 
 // ── 권한 사전 확인 후 감시 시작 ──
 const checkPermissionAndWatch = async () => {
+  // HTTP 환경이거나 PC면 위치 체크 스킵 → 바로 출퇴근 활성화
+  if (isHttpEnv || !isMobile) {
+    isLocationLoading.value = false
+    gpsStatus.value         = 'good'
+    locationErrorMsg.value  = ''
+    isInRange.value         = true   // 강제 활성화
+    return
+  }
+
   if (navigator.permissions) {
     try {
       const perm = await navigator.permissions.query({ name: 'geolocation' })
