@@ -8,11 +8,27 @@
         <div v-if="isLocationLoading" class="text-base text-slate-400 animate-pulse font-bold">
           📍 현장 위치 확인 중...
         </div>
-        <div v-else-if="isInRange" class="text-base text-emerald-600 font-bold bg-emerald-100 py-3 rounded-full inline-block px-6 border border-emerald-200">
-          ✅ 현장 근무지 도착
+
+        <div v-else-if="locationError" class="flex flex-col items-center gap-2">
+          <div class="text-base text-red-500 font-bold bg-red-100 py-3 rounded-full inline-block px-6 border border-red-200">
+            ⚠️ {{ locationError }}
+          </div>
+          <button @click="retryLocation" class="text-sm font-bold text-blue-600 underline underline-offset-4 mt-1 active:scale-95">
+            위치 다시 찾기 🔄
+          </button>
         </div>
-        <div v-else class="text-base text-red-500 font-bold bg-red-100 py-3 rounded-full inline-block px-6 border border-red-200">
-          ⚠️ 현장 밖 (기록 불가)
+
+        <div v-else-if="isInRange" class="text-base text-emerald-600 font-bold bg-emerald-100 py-3 rounded-full inline-block px-6 border border-emerald-200">
+          ✅ 현장 근무지 도착 ({{ Math.round(distance) }}m)
+        </div>
+
+        <div v-else class="flex flex-col items-center gap-2">
+          <div class="text-base text-red-500 font-bold bg-red-100 py-3 rounded-full inline-block px-6 border border-red-200">
+            ⚠️ 현장 밖 (기록 불가: {{ Math.round(distance) }}m)
+          </div>
+          <button @click="retryLocation" class="text-sm font-bold text-blue-600 underline underline-offset-4 mt-1 active:scale-95">
+            위치 다시 찾기 🔄
+          </button>
         </div>
       </div>
 
@@ -39,11 +55,6 @@
         <span class="text-red-500 text-2xl">출근과 퇴근</span>이 가능합니다.
       </div>
     </div>
-
-    <!--div class="grid grid-cols-2 gap-4">
-      <NuxtLink v-if="positionCd == '01002001' || positionCd == '01002003'" to="/request/off" class="menu-item">연차 신청</NuxtLink>
-      <NuxtLink to="/request/uniform" class="menu-item">피복 신청</NuxtLink>
-    </div-->
 
     <div v-if="showSelector" class="fixed inset-0 bg-black/70 flex items-end z-50">
       <div class="bg-white w-full rounded-t-[3rem] p-8 pb-12 space-y-6 animate-slide-up shadow-2xl">
@@ -77,11 +88,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import axios from 'axios';
-import { useAuthStore } from '~/stores/auth'; // 스토어 임포트
+import { useAuthStore } from '~/stores/auth';
 
-const authStore = useAuthStore(); // 스토어 사용
+const authStore = useAuthStore();
 const mIdx = computed(() => authStore.user?.[0]?.idx);
 const sIdx = computed(() => authStore.user?.[0]?.sIdx);
 const positionCd = computed(() => authStore.user?.[0]?.positionCd);
@@ -89,38 +100,79 @@ const positionCd = computed(() => authStore.user?.[0]?.positionCd);
 const today = new Date().toLocaleDateString('ko-KR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 const currentTime = ref('');
 const isLocationLoading = ref(true);
+const locationError = ref(''); // 모바일 에러 메시지 보관용
 const isInRange = ref(false);
 const distance = ref(0);
 const showSelector = ref(false);
 const step = ref(1);
-const isWorkStarted = ref(false); // ★ 출근 여부 상태값 추가
+const isWorkStarted = ref(false);
 let watchId = null;
 
+// 테스트용 하드코딩 좌표 (이후 sIdx 기반으로 서버에서 받아오도록 연동 필요)
 const SITE_COORDS = { lat: 37.558013, lng: 126.921870 };
 const absentStaffList = ref([]);
 
-// 위치 계산 및 추적 로직 (기존과 동일)
+// 하버사인 공식 (직선거리 계산)
 const getDistance = (lat1, lon1, lat2, lon2) => {
-  const R = 6371e3;
+  const R = 6371e3; // 지구 반경 (미터)
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
   const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
+  return R * c; // 미터 단위 반환
 };
 
+// 위치 추적 로직 (모바일 최적화)
 const startLocationWatch = () => {
-  if (!navigator.geolocation) return;
+  if (!navigator.geolocation) {
+    locationError.value = "이 기기에서는 위치 정보를 지원하지 않습니다.";
+    isLocationLoading.value = false;
+    return;
+  }
+
+  isLocationLoading.value = true;
+  locationError.value = '';
+
   watchId = navigator.geolocation.watchPosition(
       (position) => {
         isLocationLoading.value = false;
+        locationError.value = ''; // 에러 초기화
+
         const d = getDistance(position.coords.latitude, position.coords.longitude, SITE_COORDS.lat, SITE_COORDS.lng);
         distance.value = d;
-        isInRange.value = d <= 10000;
+        // 수정: 10000(10km) -> 100(100m) 로 조건 수정
+        isInRange.value = d <= 100;
       },
-      (err) => { isLocationLoading.value = false; },
-      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      (err) => {
+        isLocationLoading.value = false;
+        // 모바일 환경을 위한 상세 에러 처리
+        switch(err.code) {
+          case err.PERMISSION_DENIED:
+            locationError.value = "위치 권한이 거부되었습니다. (설정에서 허용해주세요)";
+            break;
+          case err.POSITION_UNAVAILABLE:
+            locationError.value = "위치 정보를 사용할 수 없습니다. (GPS 켜짐 확인)";
+            break;
+          case err.TIMEOUT:
+            locationError.value = "위치 요청 시간이 초과되었습니다.";
+            break;
+          default:
+            locationError.value = "위치 확인 중 알 수 없는 오류가 발생했습니다.";
+            break;
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000, // 모바일은 실내에서 GPS를 잡는데 시간이 더 걸리므로 10초로 연장
+        maximumAge: 0   // 항상 최신 위치 강제
+      }
   );
+};
+
+// 수동 재검색 함수 (모바일에서 매우 유용함)
+const retryLocation = () => {
+  if (watchId) navigator.geolocation.clearWatch(watchId);
+  startLocationWatch();
 };
 
 const openAttendanceSelector = () => {
@@ -128,11 +180,8 @@ const openAttendanceSelector = () => {
   showSelector.value = true;
 };
 
-const closeModal = () => {
-  showSelector.value = false;
-};
+const closeModal = () => { showSelector.value = false; };
 
-// 출퇴근 처리 로직
 const handleAttendance = async (type, name = null) => {
   if (!isInRange.value) {
     alert("현장 범위를 벗어났습니다.");
@@ -144,22 +193,21 @@ const handleAttendance = async (type, name = null) => {
 
   try {
     const payload = {
-      mIdx: mIdx,
-      sIdx: sIdx,
+      mIdx: mIdx.value,
+      sIdx: sIdx.value,
       workStartTime: currentTime.value,
       workType: type,
       bigo: name ? `${name} 대근` : ''
     };
 
-    // 퇴근일 경우의 API 주소는 다를 수 있으므로 체크 필요 (예시로 start 유지)
     const url = type === 'leave' ? `/api/v1/work/end` : `/api/v1/work/start`;
     await axios.post(url, payload);
 
     if (type === 'leave') {
-      isWorkStarted.value = false; // 퇴근 시 버튼 다시 활성화
+      isWorkStarted.value = false;
       alert("퇴근 처리가 완료되었습니다.");
     } else {
-      isWorkStarted.value = true; // ★ 출근 시 버튼 비활성화 상태로 변경
+      isWorkStarted.value = true;
       alert("출근 처리가 완료되었습니다.");
     }
     closeModal();
@@ -168,16 +216,10 @@ const handleAttendance = async (type, name = null) => {
   }
 };
 
-// 오늘 출근했는지 여부를 서버에서 확인하는 함수
 const checkTodayStatus = async () => {
-  let params = {
-    mIdx: mIdx,
-    sIdx: sIdx,
-  }
+  let params = { mIdx: mIdx.value, sIdx: sIdx.value };
   try {
     const res = await axios.get(`/api/v1/work/status`, {params});
-    // console.log(res, '출근여부')
-    // 서버 응답에 따라 이미 출근했다면 true로 설정
     if (res.data.data.length > 0) {
       isWorkStarted.value = true;
     }
@@ -188,7 +230,7 @@ const checkTodayStatus = async () => {
 
 const getAssignedStaff = async () => {
   try {
-    const res = await axios.get(`/api/v1/member/staffing/${sIdx}`);
+    const res = await axios.get(`/api/v1/member/staffing/${sIdx.value}`);
     absentStaffList.value = res.data.data.map(item => ({ idx: item.idx, name: item.name }));
   } catch (e) { console.error("직원 명단 로드 실패"); }
 };
