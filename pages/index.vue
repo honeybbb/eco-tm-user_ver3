@@ -54,7 +54,12 @@
         지정된 현장 100m 이내에서만<br>
         <span class="text-red-500 text-2xl">출근과 퇴근</span>이 가능합니다.
       </div>
+      <p class="text-xs text-slate-400 mt-2">
+        내 현재 GPS: {{ myLat.toFixed(5) }}, {{ myLng.toFixed(5) }}<br>
+        타겟 좌표와의 거리: {{ Math.round(distance) }}m
+      </p>
     </div>
+
 
     <div v-if="showSelector" class="fixed inset-0 bg-black/70 flex items-end z-50">
       <div class="bg-white w-full rounded-t-[3rem] p-8 pb-12 space-y-6 animate-slide-up shadow-2xl">
@@ -108,9 +113,11 @@ const step = ref(1);
 const isWorkStarted = ref(false);
 let watchId = null;
 
-// 테스트용 하드코딩 좌표 (이후 sIdx 기반으로 서버에서 받아오도록 연동 필요)
 const SITE_COORDS = { lat: 37.558013, lng: 126.921870 };
 const absentStaffList = ref([]);
+
+const myLat = ref(0);
+const myLng = ref(0);
 
 // 하버사인 공식 (직선거리 계산)
 const getDistance = (lat1, lon1, lat2, lon2) => {
@@ -135,13 +142,18 @@ const startLocationWatch = () => {
 
   watchId = navigator.geolocation.watchPosition(
       (position) => {
+
+        // startLocationWatch 안의 position 매개변수 받는 곳에 추가:
+        myLat.value = position.coords.latitude;
+        myLng.value = position.coords.longitude;
+
         isLocationLoading.value = false;
         locationError.value = ''; // 에러 초기화
 
         const d = getDistance(position.coords.latitude, position.coords.longitude, SITE_COORDS.lat, SITE_COORDS.lng);
         distance.value = d;
-        // 수정: 10000(10km) -> 100(100m) 로 조건 수정
-        isInRange.value = d <= 100;
+        // isInRange.value = d <= 100;
+        isInRange.value = d <= 300;
       },
       (err) => {
         isLocationLoading.value = false;
