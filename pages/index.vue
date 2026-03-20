@@ -166,12 +166,17 @@ const startLocationWatch = () => {
       },
       (err) => {
         isLocationLoading.value = false
-        const messages = {
-          1: '위치 권한이 거부되었습니다. 설정에서 허용해주세요.',
-          2: 'GPS 신호를 찾을 수 없습니다.',
-          3: 'GPS 응답 시간이 초과되었습니다.',
+        if (err.code === 1) {
+          // 권한 거부 → 안내 화면으로 전환
+          gpsStatus.value        = 'denied'
+          locationErrorMsg.value = ''
+        } else {
+          gpsStatus.value        = 'error'
+          locationErrorMsg.value = {
+            2: 'GPS 신호를 찾을 수 없습니다.',
+            3: 'GPS 응답 시간이 초과되었습니다.',
+          }[err.code] || 'GPS 오류가 발생했습니다.'
         }
-        locationErrorMsg.value = messages[err.code] || 'GPS 오류가 발생했습니다.'
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
   )
