@@ -355,9 +355,9 @@ const buildDebugMsg = (lat = null, lng = null) => {
       pcWarning
 }
 
-// ── HTTP / PC 환경 감지 ──
-const isHttpEnv   = window.location.protocol === 'http:'
-const isMobile    = navigator.maxTouchPoints > 0
+// ── HTTP / PC 환경 감지 (onMounted에서 초기화) ──
+const isHttpEnv = ref(false)
+const isMobile  = ref(true)
 
 // ── 위치 감시 ──
 const startLocationWatch = () => {
@@ -432,7 +432,7 @@ const startLocationWatch = () => {
 // ── 권한 사전 확인 후 감시 시작 ──
 const checkPermissionAndWatch = async () => {
   // HTTP 환경이거나 PC면 위치 체크 스킵 → 바로 출퇴근 활성화
-  if (isHttpEnv || !isMobile) {
+  if (isHttpEnv.value || !isMobile.value) {
     isLocationLoading.value = false
     gpsStatus.value         = 'good'
     locationErrorMsg.value  = ''
@@ -543,6 +543,10 @@ onMounted(async () => {
   clockTimer = setInterval(() => {
     currentTime.value = new Date().toLocaleTimeString('ko-KR')
   }, 1000)
+
+  // window/navigator는 클라이언트에서만 접근 가능
+  isHttpEnv.value = window.location.protocol === 'http:'
+  isMobile.value  = navigator.maxTouchPoints > 0
 
   await fetchSiteCoords()          // 1. 현장 좌표 먼저 로드
   await checkPermissionAndWatch()  // 2. 권한 확인 후 위치 감시 시작
