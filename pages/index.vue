@@ -96,7 +96,7 @@ const step = ref(1);
 const isWorkStarted = ref(false); // ★ 출근 여부 상태값 추가
 let watchId = null;
 
-const SITE_COORDS = { lat: 37.558052, lng: 126.921848 };
+const SITE_COORDS = { lat: 37.558013, lng: 126.921870 };
 const absentStaffList = ref([]);
 
 // 위치 계산 및 추적 로직 (기존과 동일)
