@@ -136,15 +136,16 @@ const formatDate = (dt) => {
 
 const fetchNotices = async () => {
   isLoading.value = true;
+  const cIdx = authStore.user?.[0].cIdx;
   try {
-    const response = await axios.get('/api/v1/notice/list');
+    const response = await axios.get(`/api/v1/notice/list/${cIdx}`);
     const result = response.data.data || [];
 
-    // ✅ 3. 로그인한 유저의 직위 코드 가져오기
+    // 로그인한 유저의 직위 코드 가져오기
     // (이전 코드 흐름상 authStore.user[0] 안에 정보가 있었다면 authStore.user?.[0]?.positionCd 로 맞춰주세요)
     const userPositionCd = authStore.user?.position || authStore.user?.[0]?.position;
 
-    // ✅ 4. 데이터 필터링 (target 컬럼 기준)
+    // 데이터 필터링 (target 컬럼 기준)
     notices.value = result.filter(notice => {
       const target = notice.target;
 
