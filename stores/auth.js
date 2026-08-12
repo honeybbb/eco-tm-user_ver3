@@ -2,9 +2,12 @@
 import {defineStore} from 'pinia';
 
 export const useAuthStore = defineStore('auth', () => {
-    const token = useCookie('user_token'); // 쿠키와 연동
-    const user = useCookie('user_info', {
-        default: () => null // 초기값은 null
+    const token = useCookie('eco_user_token', {
+        maxAge: 60 * 60 * 4 // 4시간 뒤 만료
+    }); // 쿠키와 연동
+    const user = useCookie('eco_user_info', {
+        default: () => null, // 초기값은 null
+        maxAge: 60 * 60 * 4 // 4시간 뒤 만료
     });
 
     const isLoggedIn = computed(() => !!token.value);

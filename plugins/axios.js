@@ -5,7 +5,7 @@ export default defineNuxtPlugin((nuxtApp) => {
     // 요청(Request) 인터셉터
     axios.interceptors.request.use((config) => {
         // localStorage 대신 useCookie 사용
-        const token = useCookie('user_token').value;
+        const token = useCookie('eco_user_token').value;
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -18,7 +18,7 @@ export default defineNuxtPlugin((nuxtApp) => {
         async (error) => {
             // 401 권한 없음 에러 발생 시
             if (error.response?.status === 401) {
-                const token = useCookie('user_token');
+                const token = useCookie('eco_user_token');
                 token.value = null; // 쿠키 초기화
 
                 // Pinia 상태 초기화를 위해 스토어 호출
