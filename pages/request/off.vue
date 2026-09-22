@@ -9,7 +9,7 @@
       <!-- 남은 연차 강조 표시 -->
       <div class="mt-5 bg-white/20 rounded-2xl px-5 py-4 flex items-center justify-between">
         <span class="text-white text-xl font-bold">남은 연차</span>
-        <span class="text-white text-4xl font-black">12<span class="text-xl font-normal ml-1">일</span></span>
+        <span class="text-white text-4xl font-black">{{ remainDays }}<span class="text-xl font-normal ml-1">일</span></span>
       </div>
     </div>
 
@@ -149,7 +149,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import axios from "axios";
 const authStore = useAuthStore();
 
@@ -160,6 +160,7 @@ const leaveTypes = [
 ];
 
 const selectedType = ref('annual');
+const remainDays = ref(0); // 남은 연차 상태 추가
 const startDt = ref('');
 const endDt = ref('');
 const reason = ref('');
@@ -253,6 +254,29 @@ const selectDate = (day) => {
   closeDatePicker();
 };
 
+// 연차 정보 가져오기 함수 수정
+const fetchRemainingDays = async () => {
+  try {
+    const res = await axios.get(`/api/v1/member/annual/list`);
+    if (res.data.result) {
+      // TODO: 데이터 구조 내에서 실제 '남은 연차' 필드를 찾아야 합니다.
+      const result = res.data.data.filter((item) => item.mIdx == mIdx)
+      console.log(result);
+      // 현재 주신 데이터에는 사업장 정보만 있으므로,
+      // 만약 응답값의 특정 필드(예: res.data.userRemainingDays)가 있다면 아래와 같이 할당합니다.
+      // 일단 예시로 데이터의 첫번째 항목의 어떤 값을 가져온다고 가정하거나,
+      // API가 본인 정보를 직접 주는 구조로 바뀌어야 합니다.
+
+      // 만약 서버에서 준 데이터 중 본인에게 해당되는 값이 있다면:
+      // remainDays.value = res.data.data[0].some_value;
+
+      console.log('연차 데이터:', res.data.data);
+    }
+  } catch (err) {
+    console.error("연차 정보를 가져오는데 실패했습니다.", err);
+  }
+};
+
 // ── 신청 ───────────────────────────────────
 const handleSubmit = () => {
   if (!startDt.value || !endDt.value) {
@@ -282,6 +306,11 @@ const handleSubmit = () => {
         alert('신청 중 오류가 발생했습니다. 다시 시도해주세요.');
       });
 };
+
+// 페이지 로드 시 호출
+onMounted(() => {
+  fetchRemainingDays();
+});
 </script>
 
 <style scoped>
